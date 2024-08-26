@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import puppeteer from 'puppeteer';
 import { Observable, Subscriber } from 'rxjs';
+const pptxgen = require('pptxgenjs');
 
 let cache = null;
 
@@ -42,6 +43,8 @@ export class AppService {
         },
       );
 
+      const ppt = new pptxgen();
+
       for (let i = 0; i < universityList.length; i++) {
         const item = universityList[i];
         await page.goto('https://www.icourse163.org' + item.link);
@@ -56,9 +59,28 @@ export class AppService {
         );
 
         observer.next({ data: item });
+
+        const slide = ppt.addSlide();
+        slide.addText(item.name, {
+          x: '10%',
+          y: '10%',
+          color: '#FF0000',
+          fontSize: 30,
+          align: ppt.AlignH.center,
+        });
+        slide.addText(item.desc, {
+          x: '10%',
+          y: '60%',
+          color: '#000000',
+          fontSize: 14,
+        });
       }
 
       await browser.close();
+
+      await ppt.writeFile({
+        fileName: '中国所有大学2.pptx',
+      });
 
       cache = universityList;
     }
